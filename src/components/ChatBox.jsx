@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import grandBot from "../assets/grant-bot.png";
 import sendIcon from "../assets/send-icon.png";
 
+import likeIcon from "../assets/ThumbsDown.png";
+import likedIcon from "../assets/mdi_like2.png";
+import dislikeIcon from "../assets/ThumbsDown2.png";
+import dislikedIcon from "../assets/mdi_like.png";
+
 function ChatBox() {
   const [messages, setMessages] = useState([
     {
@@ -78,7 +83,7 @@ function ChatBox() {
   };
 
   return (
-    <div className="h-[550px] flex flex-col rounded-lg">
+    <div className="h-[500px] flex flex-col rounded-lg">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-6 p-2">
         {messages.map((msg, i) => (
@@ -100,36 +105,76 @@ function ChatBox() {
                 />
               </div>
             </div>
-            <div className="chat-header">
+            <div className="chat-header text-gray-800">
               {msg.sender === "bot" ? "Grant Bot" : "User"}
-              <time className="text-xs opacity-50 ml-2">{msg.time}</time>
+              <time className="text-xs text-gray-600 opacity-50 ml-2">
+                {msg.time}
+              </time>
             </div>
             <div
               className={`p-2 ${
                 msg.sender === "bot"
-                  ? "bg-[#eeeeee] rounded-r-2xl rounded-tl-2xl"
+                  ? "bg-[#eeeeee] text-[#000000] rounded-r-2xl rounded-tl-2xl"
                   : "bg-[#21af85] text-white rounded-s-2xl rounded-tr-2xl"
               }`}
             >
               {msg.text}
             </div>
 
-            <div className="chat-footer opacity-50">
+            <div className="chat-footer ">
               {msg.sender === "bot" && (
-                <div className="flex space-x-2 mt-2">
+                <div className="flex space-x-2 mt-1">
                   <button
-                    className="btn btn-sm btn-outline"
                     onClick={() => handleLike(i)}
-                    disabled={msg.like}
+                    disabled={msg.like || msg.dislike}
                   >
-                    Like {msg.like && "✔"}
+                    {msg.like ? (
+                      <img
+                        className={`${
+                          msg.like || msg.dislike
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                        src={likedIcon}
+                        alt="liked-icon"
+                      />
+                    ) : (
+                      <img
+                        className={`${
+                          msg.like || msg.dislike
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                        src={likeIcon}
+                        alt="like-icon"
+                      />
+                    )}
                   </button>
                   <button
-                    className="btn btn-sm btn-outline"
                     onClick={() => handleDislike(i)}
-                    disabled={msg.dislike}
+                    disabled={msg.dislike || msg.like}
                   >
-                    Dislike {msg.dislike && "✔"}
+                    {msg.dislike ? (
+                      <img
+                        className={`${
+                          msg.dislike || msg.like
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                        src={dislikedIcon}
+                        alt="disliked-icon"
+                      />
+                    ) : (
+                      <img
+                        className={`${
+                          msg.dislike || msg.like
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                        src={dislikeIcon}
+                        alt="dislike-icon"
+                      />
+                    )}
                   </button>
                 </div>
               )}
@@ -146,7 +191,7 @@ function ChatBox() {
               </div>
             </div>
             <div className="p-2 bg-[#eeeeee] rounded-r-2xl rounded-tl-2xl">
-              <span className="loading loading-dots loading-sm"></span>
+              <span className="loading loading-dots loading-sm text-[#000000]"></span>
             </div>
           </div>
         )}
@@ -155,11 +200,42 @@ function ChatBox() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div className=" shadow-gray-800 shadow-2xl">
+          <div className="bg-[#ffffff] p-6">
+            <h2 className="text-lg mb-4 text-black">
+              Please provide your feedback
+            </h2>
+            <textarea
+              className="bg-[#ffffff] textarea textarea-bordered shadow text-black w-full mb-4"
+              placeholder="Write your feedback here..."
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                className="btn btn-sm btn-outline rounded-l-4xl rounded-tr-4xl text-[#21AF85] hover:bg-[#21AF85] hover:text-white border-none"
+                onClick={() => setShowFeedbackModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="btn btn-sm btn-primary rounded-l-4xl rounded-tr-4xl bg-[#21AF85] border-none text-white"
+                onClick={handleSubmitFeedback}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Input field - fixed bottom */}
       <form onSubmit={handleSend} className="relative w-full">
         <input
           type="text"
-          className="input input-bordered rounded-full w-full pr-10"
+          className="input input-bordered rounded-full w-full pr-10 bg-[#f5f5f5] text-black focus:outline-none"
           placeholder="Ask me anything..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -172,35 +248,6 @@ function ChatBox() {
           <img src={sendIcon} alt="Send" className="w-5 h-5" />
         </button>
       </form>
-
-      {/* Feedback Modal */}
-      {showFeedbackModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-lg mb-4">Please provide your feedback</h2>
-            <textarea
-              className="textarea textarea-bordered w-full mb-4"
-              placeholder="Write your feedback here..."
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => setShowFeedbackModal(false)}
-              >
-                Close
-              </button>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={handleSubmitFeedback}
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -36,7 +36,7 @@ function App() {
 
       {/* widget box */}
       {isOpen && (
-        <div className="fixed bottom-[100px] right-5 z-50 bg-white rounded-4xl w-[393px] shadow-2xl shadow-gray-500/50 flex flex-col">
+        <div className="fixed bottom-[80px] right-5 z-50 bg-white rounded-4xl w-[393px] shadow-2xl shadow-gray-500/50 flex flex-col">
           {!showChatBox ? (
             <div className="p-4">
               <div className="flex justify-between">
@@ -49,12 +49,12 @@ function App() {
                 </button>
               </div>
 
-              <div className="flex flex-col items-center justify-center flex-1 h-[600px] ">
+              <div className="flex flex-col items-center justify-center flex-1 h-[550px] ">
                 <img className="w-[131px]" src={logo} alt="logo" />
-                <h1 className="text-center text-[40px] font-bold my-5">
+                <h1 className="text-black text-center text-[40px] font-bold my-5">
                   TGP-Man
                 </h1>
-                <p className="text-center text-[16px]">
+                <p className="text-center text-black text-[16px]">
                   Your AI-powered assistant to help you find the perfect grant
                   opportunities.
                 </p>
@@ -67,7 +67,7 @@ function App() {
               </div>
             </div>
           ) : (
-            <div className="rounded-4xl h-[670px]">
+            <div className="rounded-4xl h-[620px]">
               <div className="flex justify-between bg-[#21af85] p-4 rounded-t-4xl">
                 <img className="w-[45px] p-1" src={grandBot} alt="logo" />
 
