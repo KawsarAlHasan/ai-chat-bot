@@ -231,13 +231,13 @@ function ChatBox() {
           </button>
         </form>
       ) : (
-        <div className=" shadow-gray-500 shadow -m-4 rounded-4xl">
+        <div className=" shadow-gray-800 shadow -m-4 rounded-4xl">
           <div className="bg-[#ffffff] p-4 rounded-4xl">
             <h2 className="text-lg mb-4 text-black text-center">
               Please provide your feedback
             </h2>
             <textarea
-              className="bg-[#ffffff] textarea textarea-bordered shadow text-black w-full mb-4 focus:outline-none"
+              className="bg-[#ffffff] textarea textarea-bordered shadow text-black w-full mb-4 focus:outline-none focus:border-gray-300"
               placeholder="Write your feedback here..."
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}

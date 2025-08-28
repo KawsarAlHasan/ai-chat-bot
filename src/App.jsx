@@ -22,7 +22,7 @@ function App() {
   };
 
   return (
-    <div className="mainContant">
+    <div className="">
       {/* floating bot icon */}
       <div className="fixed bottom-0 right-0 z-50">
         <img
@@ -36,7 +36,7 @@ function App() {
 
       {/* widget box */}
       {isOpen && (
-        <div className="fixed bottom-[70px] right-0 z-50 bg-white rounded-4xl w-[393px] shadow shadow-gray-500/50 flex flex-col">
+        <div className="fixed bottom-[70px] right-0 z-50 bg-white  rounded-4xl w-[393px] shadow shadow-gray-500/50 flex flex-col">
           {!showChatBox ? (
             <div className="p-4">
               <div className="flex justify-between">
@@ -69,7 +69,11 @@ function App() {
           ) : (
             <div className="rounded-4xl h-[620px]">
               <div className="flex justify-between bg-[#21af85] p-4 rounded-t-4xl">
-                <img className="w-[50px] h-[50px] p-1" src={grandBot} alt="logo" />
+                <img
+                  className="w-[50px] h-[50px] p-1"
+                  src={grandBot}
+                  alt="logo"
+                />
 
                 <div>
                   <h1 className="text-white text-[20px]">Grant Bot</h1>

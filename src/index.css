@@ -1,10 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-
-
 :root {
   background-color: transparent !important;
-  margin: 0;
-  padding: 0;
 }
