@@ -24,7 +24,7 @@ function ChatBox() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [feedback, setFeedback] = useState(""); // For capturing the feedback
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false); // For controlling the feedback modal visibility
+  const [showFeedbackModal, setShowFeedbackModal] = useState(0); // For controlling the feedback modal visibility
 
   // Ref for auto scroll
   const messagesEndRef = useRef(null);
@@ -66,20 +66,26 @@ function ChatBox() {
     // Handle like action for the specific message
     const updatedMessages = [...messages];
     updatedMessages[msgIndex].like = true;
+    updatedMessages[msgIndex].dislike = false;
     setMessages(updatedMessages);
   };
 
   const handleDislike = (msgIndex) => {
     // Handle dislike action for the specific message
-    const updatedMessages = [...messages];
-    updatedMessages[msgIndex].dislike = true;
-    setMessages(updatedMessages);
+    // const updatedMessages = [...messages];
+    // updatedMessages[msgIndex].dislike = true;
+    // setMessages(updatedMessages);
     setFeedback(""); // Clear previous feedback
-    setShowFeedbackModal(true); // Show the feedback modal
+    setShowFeedbackModal(msgIndex); // Show the feedback modal
   };
 
   const handleSubmitFeedback = () => {
-    setShowFeedbackModal(false); // Close feedback modal after submitting feedback
+    const updatedMessages = [...messages];
+    updatedMessages[showFeedbackModal].dislike = true;
+    updatedMessages[showFeedbackModal].like = false;
+    setMessages(updatedMessages);
+
+    setShowFeedbackModal(0); // Close feedback modal after submitting feedback
   };
 
   return (
@@ -126,25 +132,28 @@ function ChatBox() {
                 <div className="flex space-x-2 mt-1">
                   <button
                     onClick={() => handleLike(i)}
-                    disabled={msg.like || msg.dislike}
+                    // disabled={msg.like || msg.dislike}
+                    disabled={msg.like}
                   >
                     {msg.like ? (
                       <img
-                        className={`${
-                          msg.like || msg.dislike
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
+                        // className={`${
+                        //   msg.like || msg.dislike
+                        //     ? "cursor-not-allowed"
+                        //     : "cursor-pointer"
+                        // }`}
+                        className="cursor-not-allowed"
                         src={likedIcon}
                         alt="liked-icon"
                       />
                     ) : (
                       <img
-                        className={`${
-                          msg.like || msg.dislike
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
+                        // className={`${
+                        //   msg.like || msg.dislike
+                        //     ? "cursor-not-allowed"
+                        //     : "cursor-pointer"
+                        // }`}
+                        className="cursor-pointer"
                         src={likeIcon}
                         alt="like-icon"
                       />
@@ -152,25 +161,28 @@ function ChatBox() {
                   </button>
                   <button
                     onClick={() => handleDislike(i)}
-                    disabled={msg.dislike || msg.like}
+                    // disabled={msg.dislike || msg.like}
+                    disabled={msg.dislike}
                   >
                     {msg.dislike ? (
                       <img
-                        className={`${
-                          msg.dislike || msg.like
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
+                        // className={`${
+                        //   msg.dislike || msg.like
+                        //     ? "cursor-not-allowed"
+                        //     : "cursor-pointer"
+                        // }`}
+                        className="cursor-not-allowed"
                         src={dislikedIcon}
                         alt="disliked-icon"
                       />
                     ) : (
                       <img
-                        className={`${
-                          msg.dislike || msg.like
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
+                        // className={`${
+                        //   msg.dislike || msg.like
+                        //     ? "cursor-not-allowed"
+                        //     : "cursor-pointer"
+                        // }`}
+                        className="cursor-pointer"
                         src={dislikeIcon}
                         alt="dislike-icon"
                       />
@@ -201,27 +213,44 @@ function ChatBox() {
       </div>
 
       {/* Feedback Modal */}
-      {showFeedbackModal && (
-        <div className=" shadow-gray-800 shadow-2xl">
-          <div className="bg-[#ffffff] p-6">
-            <h2 className="text-lg mb-4 text-black">
+      {showFeedbackModal <= 0 ? (
+        <form onSubmit={handleSend} className="relative w-full">
+          <input
+            type="text"
+            className="input input-bordered rounded-full w-full pr-10 bg-[#f5f5f5] text-black focus:outline-none"
+            placeholder="Ask me anything..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+
+          <button
+            type="submit"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer"
+          >
+            <img src={sendIcon} alt="Send" className="w-5 h-5" />
+          </button>
+        </form>
+      ) : (
+        <div className=" shadow-gray-500 shadow -m-4 rounded-4xl">
+          <div className="bg-[#ffffff] p-4 rounded-4xl">
+            <h2 className="text-lg mb-4 text-black text-center">
               Please provide your feedback
             </h2>
             <textarea
-              className="bg-[#ffffff] textarea textarea-bordered shadow text-black w-full mb-4"
+              className="bg-[#ffffff] textarea textarea-bordered shadow text-black w-full mb-4 focus:outline-none"
               placeholder="Write your feedback here..."
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
             />
             <div className="flex justify-end space-x-2">
               <button
-                className="btn btn-sm btn-outline rounded-l-4xl rounded-tr-4xl text-[#21AF85] hover:bg-[#21AF85] hover:text-white border-none"
-                onClick={() => setShowFeedbackModal(false)}
+                className="btn btn-sm btn-outline rounded-l-4xl px-10 rounded-tr-4xl text-[#21AF85] border-none hover:text-[#21AF85]"
+                onClick={() => setShowFeedbackModal(0)}
               >
                 Close
               </button>
               <button
-                className="btn btn-sm btn-primary rounded-l-4xl rounded-tr-4xl bg-[#21AF85] border-none text-white"
+                className="btn btn-sm btn-primary rounded-l-4xl px-10 rounded-tr-4xl bg-[#21AF85] border-none text-white"
                 onClick={handleSubmitFeedback}
               >
                 Submit
@@ -230,24 +259,6 @@ function ChatBox() {
           </div>
         </div>
       )}
-
-      {/* Input field - fixed bottom */}
-      <form onSubmit={handleSend} className="relative w-full">
-        <input
-          type="text"
-          className="input input-bordered rounded-full w-full pr-10 bg-[#f5f5f5] text-black focus:outline-none"
-          placeholder="Ask me anything..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-
-        <button
-          type="submit"
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer"
-        >
-          <img src={sendIcon} alt="Send" className="w-5 h-5" />
-        </button>
-      </form>
     </div>
   );
 }
