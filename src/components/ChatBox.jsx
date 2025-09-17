@@ -8,6 +8,7 @@ import dislikeIcon from "../assets/ThumbsDown2.png";
 import dislikedIcon from "../assets/mdi_like.png";
 
 function ChatBox() {
+     const [token, setToken] = useState("");
   const [messages, setMessages] = useState([
     {
       sender: "user",
@@ -57,6 +58,16 @@ function ChatBox() {
     }, 2000);
   };
 
+ 
+
+    useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+
+    const tokenData = queryParams.get("token");
+    setToken(tokenData);
+  }, []);
+  console.log("Token Param:", token);
+
   // Auto scroll effect
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,6 +101,7 @@ function ChatBox() {
 
   return (
     <div className="h-[500px] flex flex-col rounded-lg">
+      {`token is ${token}`}
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-6 p-2">
         {messages.map((msg, i) => (
@@ -120,7 +132,7 @@ function ChatBox() {
             <div
               className={`p-2 ${
                 msg.sender === "bot"
-                  ? "bg-[#eeeeee] text-[#000000] rounded-r-2xl rounded-tl-2xl"
+                  ? "bg-[#eeeeee] text-[#000000] rounded-r-2xl rounded-tl-2xl "
                   : "bg-[#21af85] text-white rounded-s-2xl rounded-tr-2xl"
               }`}
             >

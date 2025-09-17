@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import grandBot from "./assets/grant-bot.png";
 import logo from "./assets/logo.png";
 import ChatBox from "./components/ChatBox";
 
 function App() {
+  // const token = localStorage.getItem("token");
+  // console.log("Token from localStorage:", token);
+
   const [isOpen, setIsOpen] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
 
