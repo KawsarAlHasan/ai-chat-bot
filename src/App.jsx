@@ -2,21 +2,49 @@ import { useEffect, useState } from "react";
 import grandBot from "./assets/grant-bot.png";
 import logo from "./assets/logo.png";
 import ChatBox from "./components/ChatBox";
+import { API } from "./api/api";
 
 function App() {
-  // const token = localStorage.getItem("token");
-  // console.log("Token from localStorage:", token);
-
   const [isOpen, setIsOpen] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const emailData = queryParams.get("email");
+    localStorage.setItem("email", emailData);
+  }, []);
 
   const handleBotClick = () => {
     setIsOpen(true);
     setShowChatBox(false);
   };
 
-  const handleOpenChat = () => {
-    setShowChatBox(true);
+  const handleOpenChat = async () => {
+    setIsLoading(true);
+    const conversationId = localStorage.getItem("conversationId");
+    if (conversationId) {
+      setShowChatBox(true);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await API.post("/conversations/");
+      if (response.status === 201) {
+        let conversationId = response.data.id;
+        let sessionId = response.data.session_id;
+        localStorage.setItem("conversationId", conversationId);
+        localStorage.setItem("sessionId", sessionId);
+        setShowChatBox(true);
+      }
+    } catch (error) {
+      console.log(error, "error");
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -63,10 +91,13 @@ function App() {
                 </p>
                 <button
                   onClick={handleOpenChat}
+                  disabled={isLoading}
                   className="btn btn-primary bg-[#21AF85] border-none mt-10 rounded-s-[50px] rounded-tr-[100px] w-[231px] py-[20px]"
                 >
-                  Chat Now
+                  {isLoading ? "Loading..." : "Chat Now"}
                 </button>
+
+                {error && <p className="text-red-500 mt-4">{error}</p>}
               </div>
             </div>
           ) : (
