@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import grandBot from "./assets/grant-bot.png";
 import logo from "./assets/logo.png";
+import refreshImage from "./assets/image-removebg-preview.png";
 import ChatBox from "./components/ChatBox";
 import { API } from "./api/api";
 
@@ -8,12 +9,44 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshLoading, setIsRefreshLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const emailData = queryParams.get("email");
     localStorage.setItem("email", emailData);
+
+    if (emailData) {
+      localStorage.removeItem("sessionId");
+    }
+
+    const conversationId = localStorage.getItem("conversationId");
+    const isEmailConversation = localStorage.getItem("isEmailConversation");
+    const email = localStorage.getItem("email");
+    const sessionId = localStorage.getItem("sessionId");
+    const conversationIdSessionId = localStorage.getItem(
+      "conversationIdSessionId"
+    );
+    const conversationIdEmail = localStorage.getItem("conversationIdEmail");
+
+    const checkSessionId = conversationId + sessionId;
+    const checkEmail = conversationId + email;
+
+    if (isEmailConversation == "false") {
+      if (conversationIdSessionId !== checkSessionId) {
+        localStorage.removeItem("conversationId");
+        localStorage.removeItem("sessionId");
+        localStorage.removeItem("conversationIdSessionId");
+      }
+    } else {
+      if (conversationIdEmail !== checkEmail) {
+        localStorage.removeItem("isEmailConversation");
+        localStorage.removeItem("conversationId");
+        localStorage.removeItem("sessionId");
+        localStorage.removeItem("conversationIdSessionId");
+      }
+    }
   }, []);
 
   const handleBotClick = () => {
@@ -23,7 +56,9 @@ function App() {
 
   const handleOpenChat = async () => {
     setIsLoading(true);
+
     const conversationId = localStorage.getItem("conversationId");
+
     if (conversationId) {
       setShowChatBox(true);
       setIsLoading(false);
@@ -32,11 +67,25 @@ function App() {
 
     try {
       const response = await API.post("/conversations/");
+
       if (response.status === 201) {
         let conversationId = response.data.id;
         let sessionId = response.data.session_id;
+
+        const email = localStorage.getItem("email");
+
+        if (sessionId) {
+          localStorage.setItem("sessionId", sessionId);
+          localStorage.setItem(
+            "conversationIdSessionId",
+            sessionId + sessionId
+          );
+        } else {
+          localStorage.setItem("conversationIdEmail", conversationId + email);
+        }
+
         localStorage.setItem("conversationId", conversationId);
-        localStorage.setItem("sessionId", sessionId);
+        localStorage.setItem("isEmailConversation", sessionId ? false : true);
         setShowChatBox(true);
       }
     } catch (error) {
@@ -50,6 +99,25 @@ function App() {
   const handleClose = () => {
     setIsOpen(false);
     setShowChatBox(false);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshLoading(true);
+    try {
+      const response = await API.post("/conversations/");
+      if (response.status === 201) {
+        let conversationId = response.data.id;
+        let sessionId = response.data.session_id;
+        localStorage.setItem("conversationId", conversationId);
+        localStorage.setItem("sessionId", sessionId);
+        setShowChatBox(true);
+      }
+    } catch (error) {
+      console.log(error, "error");
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsRefreshLoading(false);
+    }
   };
 
   return (
@@ -115,6 +183,16 @@ function App() {
                 </div>
 
                 <div className="flex justify-center items-center">
+                  <button onClick={handleRefresh}>
+                    <img
+                      className={`w-8 h-auto cursor-pointer mr-2 ${
+                        isRefreshLoading ? "animate-spin" : ""
+                      }`}
+                      title="Refresh conversation"
+                      src={refreshImage}
+                      alt="refresh"
+                    />
+                  </button>
                   <button
                     onClick={handleClose}
                     className="text-white hover:text-gray-600 w-8 h-8 flex items-center justify-center border-white hover:border-gray-600 border rounded-full cursor-pointer"
@@ -124,7 +202,8 @@ function App() {
                 </div>
               </div>
 
-              <div className="p-4">
+              <div>
+                {error && <p className="text-red-500 mt-4">{error}</p>}
                 <ChatBox />
               </div>
             </div>
