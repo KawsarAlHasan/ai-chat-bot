@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import grandBot from "../assets/grant-bot.png";
 import logo from "../assets/logo.png";
 import refreshImage from "../assets/image-removebg-preview.png";
+import emailImage from "../assets/email.png";
 import ChatBox from "../components/ChatBox";
 import { API } from "../api/api";
 
@@ -9,8 +10,12 @@ function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmailSending, setIsEmailSending] = useState(false);
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isRefreshLoading, setIsRefreshLoading] = useState(false);
   const [error, setError] = useState(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -24,6 +29,7 @@ function Home() {
     const conversationId = localStorage.getItem("conversationId");
     const isEmailConversation = localStorage.getItem("isEmailConversation");
     const email = localStorage.getItem("email");
+
     const sessionId = localStorage.getItem("sessionId");
     const conversationIdSessionId = localStorage.getItem(
       "conversationIdSessionId"
@@ -50,6 +56,8 @@ function Home() {
       }
     }
   }, []);
+
+  const email = localStorage.getItem("email");
 
   const handleBotClick = () => {
     setIsOpen(true);
@@ -121,6 +129,47 @@ function Home() {
       setIsRefreshLoading(false);
     }
   };
+
+  const handleSendEmail = async () => {
+    setIsEmailSending(true);
+    // clear any previous timer so messages don't get cleared prematurely
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    try {
+      const conversationId = localStorage.getItem("conversationId");
+      const response = await API.post(
+        `/conversations/${conversationId}/email-conversation/`
+      );
+      console.log(response, "response");
+      setEmailMessage("Email sent successfully on your email!");
+      // clear the success message after 3 seconds
+      timerRef.current = setTimeout(() => {
+        setEmailMessage("");
+        timerRef.current = null;
+      }, 3000);
+    } catch (error) {
+        console.log(error, "error");
+        setEmailError("An error occurred. Please try again.");
+
+        timerRef.current = setTimeout(() => {
+          setEmailError("");
+          timerRef.current = null;
+        }, 3000);
+    } finally {
+      setIsEmailSending(false);
+    }
+  };
+
+  // cleanup any pending timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="">
@@ -195,6 +244,31 @@ function Home() {
                       alt="refresh"
                     />
                   </button>
+                  {email && (
+                    <button
+                      className="cursor-pointer"
+                      onClick={handleSendEmail}
+                      disabled={isEmailSending}
+                      aria-label={isEmailSending ? "Sending email" : "Send conversation to email"}
+                    >
+                      {isEmailSending ? (
+                        <img
+                          className="w-8 h-8 mr-2 animate-spin"
+                          title="Sending..."
+                          src={refreshImage}
+                          alt="sending"
+                        />
+                      ) : (
+                        <img
+                          className="w-8 h-8 mr-2"
+                          title="Send Conversation to Email"
+                          src={emailImage}
+                          alt="email"
+                        />
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={handleClose}
                     className="text-white hover:text-gray-600 w-8 h-8 flex items-center justify-center border-white hover:border-gray-600 border rounded-full cursor-pointer"
@@ -206,7 +280,7 @@ function Home() {
 
               <div>
                 {error && <p className="text-red-500 mt-4">{error}</p>}
-                <ChatBox />
+                <ChatBox emailMessage={emailMessage} emailError={emailError} />
               </div>
             </div>
           )}

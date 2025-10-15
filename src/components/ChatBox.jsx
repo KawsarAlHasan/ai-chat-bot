@@ -6,6 +6,7 @@ import likeIcon from "../assets/ThumbsDown.png";
 import likedIcon from "../assets/mdi_like2.png";
 import dislikeIcon from "../assets/ThumbsDown2.png";
 import dislikedIcon from "../assets/mdi_like.png";
+import emailIcon from "../assets/email.png";
 import { API, useConversationsMessages, useAiResponse } from "../api/api";
 
 const insitiolMessages = [
@@ -26,7 +27,7 @@ const insitiolMessages = [
   "Welcome to GrantBot! 💰 Your companion in exploring financial aid, research grants, and business funding. What can I help you with today?",
 ];
 
-function ChatBox() {
+function ChatBox({ emailMessage, emailError }) {
   const conversationId = localStorage.getItem("conversationId") || null;
 
   const { conversationsMessages, isLoading, isError, error, refetch } =
@@ -250,6 +251,14 @@ function ChatBox() {
           <div className="text-center text-lg text-red-500">
             Something went wrong. Please try again.
           </div>
+        )}
+
+        {emailMessage && (
+          <p className="text-green-500 mt-4 text-center">{emailMessage}</p>
+        )}
+
+        {emailError && (
+          <p className="text-red-500 mt-4 text-center">{emailError}</p>
         )}
 
         {isLoading ? (
