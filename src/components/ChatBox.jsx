@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import grandBot from "../assets/grant-bot.png";
 import sendIcon from "../assets/send-icon.png";
-
+import userIcon from "../assets/user.png";
 import likeIcon from "../assets/ThumbsDown.png";
 import likedIcon from "../assets/mdi_like2.png";
 import dislikeIcon from "../assets/ThumbsDown2.png";
 import dislikedIcon from "../assets/mdi_like.png";
-import { API, useConversationsMessages } from "../api/api";
+import { API, useConversationsMessages, useAiResponse } from "../api/api";
 
 const insitiolMessages = [
   "Hello! 👋 I'm GrantBot — your smart assistant for discovering grants that match your goals. How can I help you today?",
@@ -27,38 +27,51 @@ const insitiolMessages = [
 ];
 
 function ChatBox() {
-  const conversationId = localStorage.getItem("conversationId");
+  const conversationId = localStorage.getItem("conversationId") || null;
 
   const { conversationsMessages, isLoading, isError, error, refetch } =
     useConversationsMessages(conversationId);
+
+  const [taskId, setTaskId] = useState(null);
+
+  // Poll ai response when taskId is set
+  const {
+    aiResponse,
+    isLoading: aiResponseLoading,
+    refetch: aiResponseRefetch,
+  } = useAiResponse(taskId);
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [feedback, setFeedback] = useState(""); // For capturing the feedback
-  const [showFeedbackModal, setShowFeedbackModal] = useState(0); // For controlling the feedback modal visibility
+  const [showFeedbackModal, setShowFeedbackModal] = useState(-1); // -1 means closed
   const [showInitialMessage, setShowInitialMessage] = useState(false);
 
   const formatTime = (timeString) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (err) {
+      return "";
+    }
   };
 
   // Ref for auto scroll
   const messagesEndRef = useRef(null);
 
-  // Convert API messages to app format
+  // Convert API messages to app format whenever conversationsMessages updates
   useEffect(() => {
     if (conversationsMessages?.messages) {
       const formattedMessages = conversationsMessages.messages.map((msg) => ({
         id: msg.id,
         sender: msg.role === "user" ? "user" : "bot",
         text: msg.text,
-        time: formatTime(msg.created_at), // new Date(msg.created_at).toLocaleTimeString().slice(0, 5),
+        time: formatTime(msg.created_at),
         url: msg.url,
         like: msg.liked === true,
         dislike: msg.liked === false,
@@ -69,24 +82,51 @@ function ChatBox() {
     }
   }, [conversationsMessages]);
 
+  // show initial bot message after short delay if no messages
   useEffect(() => {
     if (messages.length === 0) {
       const timer = setTimeout(() => {
         setShowInitialMessage(true);
       }, 500);
-
       return () => clearTimeout(timer);
     }
   }, [messages.length]);
 
+  // Manage typing indicator based on aiResponse polling
+  useEffect(() => {
+    // if there's an active taskId and aiResponse is loading -> show typing
+    if (taskId && aiResponseLoading) {
+      setIsTyping(true);
+      return;
+    }
+
+    // if we have aiResponse and status success -> fetch messages + stop typing
+    if (taskId && aiResponse?.data?.status === "success") {
+      // refetch conversations so the AI message appears
+      refetch();
+      setIsTyping(false);
+      // clear taskId to stop polling (useAiResponse's refetchInterval stops when taskId becomes null)
+      setTaskId(null);
+    }
+  }, [taskId, aiResponseLoading, aiResponse, refetch]);
+
+  // Auto scroll effect
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
   const handleSend = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!input.trim()) return;
 
+    const userText = input.trim();
+
+    // Add optimistic user message
     const newMessage = {
+      id: `tmp-${Date.now()}`,
       sender: "user",
-      text: input,
-      time: formatTime(new Date()), // new Date().toLocaleTimeString().slice(0, 5),
+      text: userText,
+      time: formatTime(new Date()),
     };
 
     setMessages((prev) => [...prev, newMessage]);
@@ -97,61 +137,61 @@ function ChatBox() {
       const response = await API.post(
         `/conversations/${conversationId}/send-message/`,
         {
-          text: input,
+          text: userText,
         }
       );
 
-      console.log(response, "response");
-
-      if (response.status === 200) {
-        // Refetch messages to get updated conversation
-        refetch();
-      } else if (response.status === 400) {
+      if (response.status === 200 && response.data?.data?.task_id) {
+        const returnedTaskId = response.data.data.task_id;
+        setTaskId(returnedTaskId);
+        // useAiResponse hook will poll automatically
+      } else {
+        // fallback error message
+        setIsTyping(false);
         setMessages((prev) => [
           ...prev,
           {
+            id: `err-${Date.now()}`,
             sender: "bot",
-            text: "Sorry, there was an error processing your request. Please try again.",
-            time: formatTime(new Date()), // new Date().toLocaleTimeString().slice(0, 5),
+            text: "Sorry, there was an error starting the AI process. Please try again.",
+            time: formatTime(new Date()),
           },
         ]);
       }
-    } catch (error) {
-      console.log(error, "error");
-
-      // Add error message to chat
+    } catch (err) {
+      console.log("send-message error:", err);
+      setIsTyping(false);
       setMessages((prev) => [
         ...prev,
         {
+          id: `err-${Date.now()}`,
           sender: "bot",
           text: "Sorry, there was an error processing your request. Please try again.",
-          time: formatTime(new Date()), // new Date().toLocaleTimeString().slice(0, 5),
+          time: formatTime(new Date()),
         },
       ]);
-    } finally {
-      setIsTyping(false);
     }
   };
 
-  // Auto scroll effect
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
-
   const handleLike = async (msgIndex) => {
-    const messageId = messages[msgIndex].id;
+    const message = messages[msgIndex];
+    if (!message?.id) return;
 
     try {
       await API.post(
-        `/conversations/${conversationId}/send-reaction/${messageId}/`,
+        `/conversations/${conversationId}/send-reaction/${message.id}/`,
         {
           liked: true,
         }
       );
 
       const updatedMessages = [...messages];
-      updatedMessages[msgIndex].like = true;
-      updatedMessages[msgIndex].dislike = false;
+      updatedMessages[msgIndex] = {
+        ...updatedMessages[msgIndex],
+        like: true,
+        dislike: false,
+        reason_to_dislike: null,
+      };
       setMessages(updatedMessages);
     } catch (error) {
       console.log("Error updating like:", error);
@@ -159,39 +199,44 @@ function ChatBox() {
   };
 
   const handleDislike = (msgIndex) => {
-    setFeedback(""); // Clear previous feedback
-    setShowFeedbackModal(msgIndex); // Show the feedback modal
+    setFeedback("");
+    setShowFeedbackModal(msgIndex); // open modal for that message
   };
 
   const handleSubmitFeedback = async () => {
     const msgIndex = showFeedbackModal;
-    const messageId = messages[msgIndex].id;
+    if (msgIndex === -1) return;
+    const message = messages[msgIndex];
+    if (!message?.id) {
+      setShowFeedbackModal(-1);
+      return;
+    }
 
     try {
-      // Update in backend
       await API.post(
-        `/conversations/${conversationId}/send-reaction/${messageId}/`,
+        `/conversations/${conversationId}/send-reaction/${message.id}/`,
         {
           liked: false,
           reason_to_dislike: feedback,
         }
       );
 
-      // Update local state
       const updatedMessages = [...messages];
-      updatedMessages[msgIndex].dislike = true;
-      updatedMessages[msgIndex].like = false;
-      updatedMessages[msgIndex].reason_to_dislike = feedback;
+      updatedMessages[msgIndex] = {
+        ...updatedMessages[msgIndex],
+        dislike: true,
+        like: false,
+        reason_to_dislike: feedback,
+      };
       setMessages(updatedMessages);
-
-      setShowFeedbackModal(0); // Close feedback modal
-      setFeedback(""); // Clear feedback text
+      setShowFeedbackModal(-1);
+      setFeedback("");
     } catch (error) {
       console.log("Error updating dislike:", error);
     }
   };
 
-  // causes the message to change while the user is typing.
+  // random initial message index (stable across renders)
   const randomIndexRef = useRef(
     Math.floor(Math.random() * insitiolMessages.length)
   );
@@ -209,16 +254,6 @@ function ChatBox() {
 
         {isLoading ? (
           <div className="flex w-full flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
-              <div className="skeleton h-10 w-3/5"></div>
-            </div>
-
-            <div className="flex items-end !chat !chat-end gap-2">
-              <div className="skeleton h-10 w-3/5"></div>
-              <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
-            </div>
-
             <div className="flex items-center gap-2">
               <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
               <div className="skeleton h-10 w-3/5"></div>
@@ -276,7 +311,7 @@ function ChatBox() {
             ) : (
               messages.map((msg, i) => (
                 <div
-                  key={msg.id || i}
+                  key={msg.id || `msg-${i}`}
                   className={` -mb-0.5 chat ${
                     msg.sender === "bot" ? "chat-start" : "chat-end"
                   }`}
@@ -285,11 +320,7 @@ function ChatBox() {
                     <div className="w-10 rounded-full">
                       <img
                         alt="avatar"
-                        src={
-                          msg.sender === "bot"
-                            ? grandBot
-                            : "https://img.daisyui.com/images/profile/demo/anakeen@192.webp"
-                        }
+                        src={msg.sender === "bot" ? grandBot : userIcon}
                       />
                     </div>
                   </div>
@@ -388,9 +419,9 @@ function ChatBox() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Feedback Modal */}
+      {/* Feedback Modal / Input Area */}
       <div className="">
-        {showFeedbackModal <= 0 ? (
+        {showFeedbackModal === -1 ? (
           <div className="px-4">
             <form onSubmit={handleSend} className="relative w-full">
               <input
@@ -424,7 +455,7 @@ function ChatBox() {
               <div className="flex justify-end space-x-2">
                 <button
                   className="btn btn-sm btn-outline rounded-l-4xl px-10 rounded-tr-4xl text-[#21AF85] border-none hover:text-[#21AF85]"
-                  onClick={() => setShowFeedbackModal(0)}
+                  onClick={() => setShowFeedbackModal(-1)}
                 >
                   Close
                 </button>

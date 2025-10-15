@@ -22,6 +22,7 @@ API.interceptors.request.use((config) => {
 // get conversations Message
 export const useConversationsMessages = (conversationId) => {
   const getData = async () => {
+    if (!conversationId) return null;
     const response = await API.get(`/conversations/${conversationId}/`);
     return response.data;
   };
@@ -35,7 +36,39 @@ export const useConversationsMessages = (conversationId) => {
   } = useQuery({
     queryKey: ["conversationsMessages", conversationId],
     queryFn: getData,
+    enabled: !!conversationId,
   });
 
   return { conversationsMessages, isLoading, isError, error, refetch };
+};
+
+// useAiResponse hook: polls the ai-response-receiver endpoint while taskId exists
+export const useAiResponse = (taskId, options = {}) => {
+  const getData = async () => {
+    if (!taskId) return null;
+    const response = await API.get(
+      `/conversations/ai-response-receiver/?task_id=${taskId}`
+    );
+    return response.data;
+  };
+
+  const {
+    data: aiResponse = null,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["aiResponse", taskId],
+    queryFn: getData,
+    enabled: !!taskId,
+    refetchInterval: (data) => {
+      if (!taskId) return false;
+      if (data?.data?.status === "success") return false;
+      return 1500;
+    },
+    ...options,
+  });
+
+  return { aiResponse, isLoading, isError, error, refetch };
 };
