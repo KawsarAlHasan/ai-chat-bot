@@ -65,7 +65,7 @@ export const useAiResponse = (taskId, options = {}) => {
     refetchInterval: (data) => {
       if (!taskId) return false;
       if (data?.data?.status === "success") return false;
-      return 1500;
+      return 500;
     },
     ...options,
   });

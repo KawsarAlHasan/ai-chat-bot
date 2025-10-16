@@ -6,29 +6,11 @@ import likeIcon from "../assets/ThumbsDown.png";
 import likedIcon from "../assets/mdi_like2.png";
 import dislikeIcon from "../assets/ThumbsDown2.png";
 import dislikedIcon from "../assets/mdi_like.png";
-import emailIcon from "../assets/email.png";
 import { API, useConversationsMessages, useAiResponse } from "../api/api";
-
-const insitiolMessages = [
-  "Hello! 👋 I'm GrantBot — your smart assistant for discovering grants that match your goals. How can I help you today?",
-  "Welcome to GrantBot! 🎯 Whether you're a student, researcher, or startup, I’ll help you find funding opportunities that fit your needs.",
-  "Hi there! I’m GrantBot — here to make finding and applying for grants simple and stress-free. What kind of grant are you looking for?",
-  "👋 Welcome! GrantBot at your service. I can help you explore available grants, check eligibility, or guide you through applications. Where shall we start?",
-  "Hey! 🌟 Looking for financial support or funding options? You’ve come to the right place — I’m GrantBot, your personal funding assistant.",
-  "Welcome! 🚀 I’m here to help you navigate the world of grants — from research grants to business funding. What brings you here today?",
-  "Hi! 💡 I’m GrantBot — your 24/7 guide to finding grants, scholarships, and funding opportunities. Want me to show you some options?",
-  "👋 Welcome to GrantBot! I specialize in matching your profile with the best grant programs out there. Ready to begin?",
-  "Greetings! 🎓 Are you searching for student, research, or community project grants? I can help you locate and understand them easily.",
-  "Welcome aboard! I’m GrantBot — think of me as your funding matchmaker. Tell me a bit about your project or need.",
-  "Hi there! 🌍 Need help with your grant search? I can assist you in finding open grants, checking requirements, or preparing to apply.",
-  "👋 Welcome! I’m GrantBot — I make it easier to find the right grants and understand how to apply. What type of grant are you interested in?",
-  "Hello and welcome! 🎉 Looking for funding for education, business, or research? Let’s find the perfect grant for you.",
-  "Hi 👋 — GrantBot here! I help individuals, startups, and organizations discover available grants. Shall we start with your area or purpose?",
-  "Welcome to GrantBot! 💰 Your companion in exploring financial aid, research grants, and business funding. What can I help you with today?",
-];
 
 function ChatBox({ emailMessage, emailError }) {
   const conversationId = localStorage.getItem("conversationId") || null;
+  const greetingMessage = localStorage.getItem("greetingMessage") || null;
 
   const { conversationsMessages, isLoading, isError, error, refetch } =
     useConversationsMessages(conversationId);
@@ -237,12 +219,6 @@ function ChatBox({ emailMessage, emailError }) {
     }
   };
 
-  // random initial message index (stable across renders)
-  const randomIndexRef = useRef(
-    Math.floor(Math.random() * insitiolMessages.length)
-  );
-  const randomMessage = insitiolMessages[randomIndexRef.current];
-
   return (
     <div className="h-[525px] flex flex-col rounded-lg">
       {/* Messages area */}
@@ -312,7 +288,7 @@ function ChatBox({ emailMessage, emailError }) {
                       </time>
                     </div>
                     <div className="p-2 max-w-[80%] whitespace-normal break-words bg-[#eeeeee] text-[#000000] rounded-r-2xl rounded-tl-2xl">
-                      {randomMessage}
+                      {greetingMessage}
                     </div>
                   </div>
                 )}

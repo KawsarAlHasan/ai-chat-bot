@@ -13,24 +13,25 @@ export default function Report() {
   const [loading, setLoading] = useState(false);
   const [noReport, setNoReport] = useState(false);
 
-  useEffect(() => {
-    if (!reportId) {
-      setNoReport(true);
-      setShowModal(false);
-    } else {
-      setShowModal(true);
-    }
-  }, [reportId]);
+  const storedEmail =
+    typeof window !== "undefined" ? localStorage.getItem("email") : null;
 
   const fetchReportData = async (userEmail) => {
+    if (!reportId) {
+      setNoReport(true);
+      return;
+    }
+
     try {
       setLoading(true);
+      setNoReport(false);
       const url = `${API_BASE}?report_id=${encodeURIComponent(reportId)}`;
       const headers = {};
       if (userEmail) headers["X-User-Email"] = userEmail;
 
       const res = await fetch(url, { headers });
       if (!res.ok) {
+        setReportData(null);
         setNoReport(true);
         return;
       }
@@ -39,21 +40,39 @@ export default function Report() {
         setReportData(data.data);
         setNoReport(false);
       } else {
+        setReportData(null);
         setNoReport(true);
       }
     } catch (err) {
-      console.error("Error fetching:", err);
+      console.error("Error fetching report:", err);
+      setReportData(null);
       setNoReport(true);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!reportId) {
+      setNoReport(true);
+      setShowModal(false);
+      return;
+    }
+
+    if (storedEmail) {
+      setShowModal(false);
+      fetchReportData(storedEmail);
+    } else {
+      setShowModal(true);
+    }
+  }, [reportId]);
+
   const handleEmailSubmit = (e) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const trimmed = email.trim();
+    if (!trimmed) return;
     setShowModal(false);
-    fetchReportData(email.trim());
+    fetchReportData(trimmed);
   };
 
   const formatAmount = (amount) => {
@@ -67,9 +86,9 @@ export default function Report() {
 
   return (
     <div className="bg-gray-100 min-h-screen font-sans">
-     {/* Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-bold mb-4 text-gray-700 text-center">
               Enter Your Email
@@ -85,27 +104,37 @@ export default function Report() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoFocus
               />
-              <button
-                type="submit"
-                className="w-full bg-[#305496] text-white py-2 rounded hover:bg-[#25406f] transition"
-              >
-                Submit
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-[#305496] text-white py-2 rounded hover:bg-[#25406f] transition"
+                >
+                  Submit
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
       {/* No Report */}
-      {noReport && (
-        <div className="container mx-auto p-6 mt-10">
+      {noReport && !loading && (
+        <div className="container mx-auto p-6 pt-10">
           <h1 className="text-3xl text-center font-bold text-gray-700 mb-8">
             The Grant Portal Report
           </h1>
           <p className="text-lg text-center text-gray-600 mb-4">
             No report found.
           </p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div className="text-center pt-10 text-gray-600 text-lg">
+          Loading report...
         </div>
       )}
 
@@ -125,11 +154,14 @@ export default function Report() {
               <strong>Report Date:</strong>{" "}
               <span>
                 {reportData.created_at
-                  ? new Date(reportData.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "2-digit",
-                    })
+                  ? new Date(reportData.created_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "2-digit",
+                      }
+                    )
                   : "N/A"}
               </span>
             </p>
@@ -153,7 +185,7 @@ export default function Report() {
                 reportData.report.map((grant) => (
                   <tr key={grant.id} className="border-b border-gray-200">
                     <td className="text-center p-2 font-semibold">
-                      1234{grant.id}
+                      {grant.id}
                     </td>
                     <td className="text-center p-2 w-[200px]">
                       <a
@@ -194,12 +226,6 @@ export default function Report() {
               )}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {loading && (
-        <div className="text-center mt-10 text-gray-600 text-lg">
-          Loading report...
         </div>
       )}
     </div>

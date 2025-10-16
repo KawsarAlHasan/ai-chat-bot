@@ -57,7 +57,7 @@ function Home() {
     }
   }, []);
 
-  const email = localStorage.getItem("email");
+  const isEmailConversation = localStorage.getItem("isEmailConversation");
 
   const handleBotClick = () => {
     setIsOpen(true);
@@ -81,6 +81,7 @@ function Home() {
       if (response.status === 201) {
         let conversationId = response.data.id;
         let sessionId = response.data.session_id;
+        let greetingMessage = response?.data?.greeting_message;
 
         const email = localStorage.getItem("email");
 
@@ -94,6 +95,7 @@ function Home() {
           localStorage.setItem("conversationIdEmail", conversationId + email);
         }
 
+        localStorage.setItem("greetingMessage", greetingMessage);
         localStorage.setItem("conversationId", conversationId);
         localStorage.setItem("isEmailConversation", sessionId ? false : true);
         setShowChatBox(true);
@@ -118,6 +120,9 @@ function Home() {
       if (response.status === 201) {
         let conversationId = response.data.id;
         let sessionId = response.data.session_id;
+        let greetingMessage = response?.data?.greeting_message;
+
+        localStorage.setItem("greetingMessage", greetingMessage);
         localStorage.setItem("conversationId", conversationId);
         localStorage.setItem("sessionId", sessionId);
         setShowChatBox(true);
@@ -150,13 +155,13 @@ function Home() {
         timerRef.current = null;
       }, 3000);
     } catch (error) {
-        console.log(error, "error");
-        setEmailError("An error occurred. Please try again.");
+      console.log(error, "error");
+      setEmailError("An error occurred. Please try again.");
 
-        timerRef.current = setTimeout(() => {
-          setEmailError("");
-          timerRef.current = null;
-        }, 3000);
+      timerRef.current = setTimeout(() => {
+        setEmailError("");
+        timerRef.current = null;
+      }, 3000);
     } finally {
       setIsEmailSending(false);
     }
@@ -244,12 +249,17 @@ function Home() {
                       alt="refresh"
                     />
                   </button>
-                  {email && (
+
+                  {isEmailConversation == "true" && (
                     <button
                       className="cursor-pointer"
                       onClick={handleSendEmail}
                       disabled={isEmailSending}
-                      aria-label={isEmailSending ? "Sending email" : "Send conversation to email"}
+                      aria-label={
+                        isEmailSending
+                          ? "Sending email"
+                          : "Send conversation to email"
+                      }
                     >
                       {isEmailSending ? (
                         <img
