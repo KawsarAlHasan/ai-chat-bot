@@ -153,7 +153,7 @@ function Home() {
       timerRef.current = setTimeout(() => {
         setEmailMessage("");
         timerRef.current = null;
-      }, 3000);
+      }, 4000);
     } catch (error) {
       console.log(error, "error");
       setEmailError("An error occurred. Please try again.");
@@ -161,7 +161,7 @@ function Home() {
       timerRef.current = setTimeout(() => {
         setEmailError("");
         timerRef.current = null;
-      }, 3000);
+      }, 4000);
     } finally {
       setIsEmailSending(false);
     }

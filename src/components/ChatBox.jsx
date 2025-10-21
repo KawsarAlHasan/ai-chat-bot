@@ -50,9 +50,13 @@ function ChatBox({ emailMessage, emailError }) {
   // Convert API messages to app format whenever conversationsMessages updates
   useEffect(() => {
     if (conversationsMessages?.messages) {
+      console.log(conversationsMessages?.messages, "conversationsMessages");
       const formattedMessages = conversationsMessages.messages.map((msg) => ({
         id: msg.id,
         sender: msg.role === "user" ? "user" : "bot",
+        role: msg.role,
+        query_type: msg.query_type,
+        query_count: msg.query_count,
         text: msg.text,
         time: formatTime(msg.created_at),
         url: msg.url,
@@ -229,14 +233,6 @@ function ChatBox({ emailMessage, emailError }) {
           </div>
         )}
 
-        {emailMessage && (
-          <p className="text-green-500 mt-4 text-center">{emailMessage}</p>
-        )}
-
-        {emailError && (
-          <p className="text-red-500 mt-4 text-center">{emailError}</p>
-        )}
-
         {isLoading ? (
           <div className="flex w-full flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -322,7 +318,17 @@ function ChatBox({ emailMessage, emailError }) {
                         : "bg-[#21af85] text-white rounded-s-2xl rounded-tr-2xl"
                     }`}
                   >
-                    {msg.text}
+                    {msg.text}{" "}
+                    {msg.query_count && <strong>{msg.query_count}</strong>}
+                    {msg.query_type == "grant" && msg.query_count !== null && (
+                      <>
+                        <div className="border-b-[1px] border-gray-500 my-2 mx-1"></div>
+                        <p className="">
+                          Click on the link below to view the grant report. The
+                          report link will be sent to your email's inbox.
+                        </p>
+                      </>
+                    )}
                     {msg.url && (
                       <p className="mt-0.5">
                         <span className="font-semibold pr-1">Link:</span>
@@ -398,6 +404,14 @@ function ChatBox({ emailMessage, emailError }) {
               <span className="loading loading-dots loading-sm text-[#000000]"></span>
             </div>
           </div>
+        )}
+
+        {emailMessage && (
+          <p className="text-green-500 mt-4 text-center">{emailMessage}</p>
+        )}
+
+        {emailError && (
+          <p className="text-red-500 mt-4 text-center">{emailError}</p>
         )}
 
         {/* Invisible marker for scroll */}
