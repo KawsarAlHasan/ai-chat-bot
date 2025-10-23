@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 export const API = axios.create({
-  baseURL: "http://10.10.7.91:8006/api/v1",
+  baseURL: "https://tcgbackend.dsrt321.online/api/v1",
+  // baseURL: "http://localhost:8099/api/v1/settings/terms"
 });
 
 API.interceptors.request.use((config) => {
