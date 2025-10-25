@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-const API_BASE = "http://10.10.7.91:8006/api/v1/core-utils/grant-report";
+const API_BASE = "https://tcg.dsrt321.online/api/v1/core-utils/grant-report";
 
 export default function Report() {
   const [searchParams] = useSearchParams();
