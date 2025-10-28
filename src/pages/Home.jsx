@@ -108,9 +108,35 @@ function Home() {
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     setIsOpen(false);
     setShowChatBox(false);
+
+    if (isEmailConversation !== "true") {
+      return;
+    }
+
+    try {
+      const conversationId = localStorage.getItem("conversationId");
+      const response = await API.post(
+        `/conversations/${conversationId}/email-conversation/`
+      );
+      console.log(response, "response");
+      setEmailMessage("Email sent successfully on your email!");
+      // clear the success message after 3 seconds
+      timerRef.current = setTimeout(() => {
+        setEmailMessage("");
+        timerRef.current = null;
+      }, 3000);
+    } catch (error) {
+      console.log(error, "error");
+      setEmailError("An error occurred. Please try again.");
+
+      timerRef.current = setTimeout(() => {
+        setEmailError("");
+        timerRef.current = null;
+      }, 3000);
+    }
   };
 
   const handleRefresh = async () => {
