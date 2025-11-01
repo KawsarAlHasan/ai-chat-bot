@@ -6,6 +6,7 @@ const API_BASE = "https://tcg.dsrt321.online/api/v1/core-utils/grant-report";
 export default function Report() {
   const [searchParams] = useSearchParams();
   const reportId = searchParams.get("report");
+  const paramsEmail = searchParams.get("email");
 
   const [email, setEmail] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -13,8 +14,7 @@ export default function Report() {
   const [loading, setLoading] = useState(false);
   const [noReport, setNoReport] = useState(false);
 
-  const storedEmail =
-    typeof window !== "undefined" ? localStorage.getItem("email") : null;
+  const storedEmail = typeof window !== "undefined" ? paramsEmail : null;
 
   const fetchReportData = async (userEmail) => {
     if (!reportId) {
