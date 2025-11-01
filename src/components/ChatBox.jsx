@@ -11,6 +11,7 @@ import { API, useConversationsMessages, useAiResponse } from "../api/api";
 function ChatBox({ emailMessage, emailError }) {
   const conversationId = localStorage.getItem("conversationId") || null;
   const greetingMessage = localStorage.getItem("greetingMessage") || null;
+  const emailData = localStorage.getItem("email") || null;
 
   const { conversationsMessages, isLoading, isError, error, refetch } =
     useConversationsMessages(conversationId);
@@ -333,7 +334,7 @@ function ChatBox({ emailMessage, emailError }) {
                       <p className="mt-0.5">
                         <span className="font-semibold pr-1">Link:</span>
                         <a
-                          href={msg.url}
+                          href={msg.url + "&email=" + emailData}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 underline"
